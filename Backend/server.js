@@ -1,10 +1,13 @@
 const express = require('express')
 const mongoose =require("mongoose")
+const cors = require("cors");
 require("dotenv").config()
 
 const routes = require("./routes/routes.js")
 
 const app = express()
+
+app.use(cors());
 
 app.listen(3000,()=> console.log("Server Started successfully...!!!!"))
 
