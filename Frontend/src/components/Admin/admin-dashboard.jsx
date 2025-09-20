@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
+  const navigate =useNavigate();
+
+  const handlelogout = ()=>{
+    localStorage.removeItem("token");
+    navigate("/signin")
+  }
   // State to hold the list of schools
   const [schools, setSchools] = useState([]);
   // State to hold the selected school's details
@@ -101,6 +108,7 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
+            <button onClick={handlelogout}>Logout</button>
           </>
         ) : (
           <>

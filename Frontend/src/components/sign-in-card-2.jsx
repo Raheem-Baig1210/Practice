@@ -67,12 +67,14 @@ export default function App() {
       });
 
       const data = await response.json();
-      console.log('API Response:', data);
+      // console.log('API Response:', data);
+      // console.log('Tokens:', data.data.tokens);
       navigate("/admin-dashboard")
 
       if (response.ok) {
         // Here you would handle a successful login, such as redirecting the user
         // or updating a global state.
+        localStorage.setItem("token",data.data.tokens)
         alert('Login successful!'); // Use a custom modal in a real app
       } 
       else {
