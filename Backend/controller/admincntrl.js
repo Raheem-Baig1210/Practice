@@ -1,5 +1,7 @@
 const admin = require("../model/admin");
 const adminMdl = require("../model/admin")
+const schoolMdl = require("../model/school_admin")
+const teacherMdl = require("../model/teacher")
 const {responseGenerator, hashpassword, comparepassword, generateTokens} = require("../utils/utils")
 
 
@@ -18,7 +20,7 @@ const registerAdmin = async(req,res)=>{
         await admin.save()
         let resp = responseGenerator(true, "Admin registered successfully...!!!", admin.id)
         return res.status(201).json(resp)
-
+        
     }
     catch(err){
         res.status(500).json({message:"Error while registering admin...!!!",error:err.message})
@@ -48,6 +50,7 @@ const loginAdmin = async(req,res)=>{
     }
 }
 
+
 const listOfAdmins = async(req,res)=>{
     try{
         const admins = await adminMdl.find().select("-password").lean()
@@ -59,9 +62,74 @@ const listOfAdmins = async(req,res)=>{
     }
 }
 
+const addNewSchool = async(req,res) =>{
+    try{
+        const data = req.body
+        const {email,password}= data
+        const existingSchool = await schoolMdl.findOne({email})
+        if(existingSchool){
+            let resp = responseGenerator(false, "School already exists...!!!");
+            return res.status(400).json(resp)
+        }
+        data.password = await hashpassword(password)
+        const school = new schoolMdl(data)
+        await school.save()
+        let resp = responseGenerator(true,"New school added successfully..!!!",school.id)
+        return res.status(201).json(resp)
+    }catch(err){
+        let resp = responseGenerator(false, "Error while adding new school...!!!", err.message)
+        return res.status(500).json(resp)
+    }
+}
+
+const listOfSchools = async(req,res)=>{
+    try {
+        const schools = await schoolMdl.find().select("-password").lean()
+        let resp = responseGenerator(true, "Here is the list of schools...!!!",schools)
+        return res.status(200).json(resp)
+    } catch (err) {
+        let resp = responseGenerator(false, "Error while fetching of list of school...!!!",err.message)
+        return res.status(500).json(resp)
+    }
+}
+
+const  addNewTeacher = async(req,res)=>{
+    try {
+        const data = req.body
+        const {email,password,phno}= data
+        const existingTeacher = await teacherMdl.findOne({email,phno})
+        if(existingTeacher){
+            let resp = responseGenerator(false,"Teacher already exist with the same email or phone number...!!!")
+            return res.status(200).json(resp)
+        }
+        data.password=await hashpassword(password)
+        const teacher = new teacherMdl(data)
+        await teacher.save()
+        let resp=responseGenerator(true,"Teacher added successfully...!!!",teacher.id)
+        return res.status(200).json(resp)
+    } catch (error) {
+        let resp = responseGenerator(false, "Error while adding new teacher ...!!!",error.message)
+        return res.status(404).json(resp)
+    }
+}
+
+const listOfTeachers = async(req,res)=>{
+    try {
+        const teachers = await teacherMdl.find().select("id name").lean()
+        let resp = responseGenerator(true, "Here is the list of teachers...!!!",teachers)
+        return res.status(200).json(resp)
+    } catch (error) {
+        let resp= responseGenerator(false,"Error while fetching the list of teachers...!!!",error.message)
+        return res.status(404).json(resp)
+    }
+}
 
 module.exports={
     registerAdmin,
     loginAdmin,
-    listOfAdmins
+    listOfAdmins,
+    addNewSchool,
+    listOfSchools,
+    addNewTeacher,
+    listOfTeachers
 }

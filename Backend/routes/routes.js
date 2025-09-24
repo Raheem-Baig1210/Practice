@@ -1,15 +1,17 @@
 const express = require("express")
 const router = express.Router()
-const contrl = require("../controller/cntrl")
+const admin_routes =  require("./admin_routes")
 const admincntrl = require("../controller/admincntrl")
 const middleware = require("../middleware/isLoggedIn")
+const contrl  = require("../controller/cntrl")
 
 // const jwt = require("jsonwebtoken");
 
 
 router.get("/hello",contrl.hello)
-router.post("/registerAdmin", admincntrl.registerAdmin)
-router.post("/loginAdmin", admincntrl.loginAdmin)
-router.post("/listOfAdmins",middleware.isLoggedIn,admincntrl.listOfAdmins)
+// router.post("/registerAdmin", admincntrl.registerAdmin)
+// router.post("/loginAdmin", admincntrl.loginAdmin)
+// router.post("/listOfAdmins",middleware.isLoggedIn,admincntrl.listOfAdmins)
+router.use("/admin",admin_routes)
 
 module.exports=router

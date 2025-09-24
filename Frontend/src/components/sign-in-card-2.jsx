@@ -58,7 +58,7 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/hit/loginAdmin', {
+      const response = await fetch('http://localhost:3000/admin/loginAdmin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export default function App() {
         // Here you would handle a successful login, such as redirecting the user
         // or updating a global state.
         localStorage.setItem("token",data.data.tokens)
-        alert('Login successful!'); // Use a custom modal in a real app
+        // alert('Login successful!'); // Use a custom modal in a real app
       } 
       else {
         // Handle login failure, e.g., display an error message
