@@ -7,7 +7,10 @@ const teacherSchema = new schema(
         email: {type: String, required: true, unique: true},
         phno: {type: Number, required: true, unique: true},
         password: {type: String, required: true},
-        school: {type: mongoose.Schema.Types.ObjectId, ref: "school_admin", required: true}
+        subject:{type: String, required: true},
+        qualification:{type: String, required: true},
+        experience:{type: Number, required: true},
+        schoolId: {type: mongoose.Schema.Types.ObjectId, ref: "school_admin", required: true}
     },
     {timestamps: true}
 )

@@ -115,8 +115,9 @@ const  addNewTeacher = async(req,res)=>{
 
 const listOfTeachers = async(req,res)=>{
     try {
-        const teachers = await teacherMdl.find().select("id name").lean()
+        const teachers = await teacherMdl.find().select("-password").lean()
         let resp = responseGenerator(true, "Here is the list of teachers...!!!",teachers)
+        console.log(teachers.phno, teachers.email)
         return res.status(200).json(resp)
     } catch (error) {
         let resp= responseGenerator(false,"Error while fetching the list of teachers...!!!",error.message)
