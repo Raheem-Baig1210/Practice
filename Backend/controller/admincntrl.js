@@ -1,7 +1,8 @@
 const admin = require("../model/admin");
 const adminMdl = require("../model/admin")
 const schoolMdl = require("../model/school_admin")
-const teacherMdl = require("../model/teacher")
+const teacherMdl = require("../model/teacher");
+const { param } = require("../routes/admin_routes");
 const {responseGenerator, hashpassword, comparepassword, generateTokens} = require("../utils/utils")
 
 
@@ -117,10 +118,30 @@ const listOfTeachers = async(req,res)=>{
     try {
         const teachers = await teacherMdl.find().select("-password").lean()
         let resp = responseGenerator(true, "Here is the list of teachers...!!!",teachers)
-        console.log(teachers.phno, teachers.email)
+        // console.log(teachers.phno, teachers.email)
         return res.status(200).json(resp)
     } catch (error) {
         let resp= responseGenerator(false,"Error while fetching the list of teachers...!!!",error.message)
+        return res.status(404).json(resp)
+    }
+}
+
+
+const updateTeacher = async(req,res)=>{
+    try {
+        const teacherId=req.params.id
+        const updateData = req.body;
+
+        const updatedTeacher= await teacherMdl.findByIdAndUpdate(teacherId,updateData,{new: true})
+        if (!updatedTeacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+
+    res.status(200).json({
+      message: 'Teacher updated successfully'
+    });
+    } catch (err) {
+        let resp = responseGenerator(false, "Error While updating the teacher...!!!",err)
         return res.status(404).json(resp)
     }
 }
@@ -132,5 +153,6 @@ module.exports={
     addNewSchool,
     listOfSchools,
     addNewTeacher,
-    listOfTeachers
+    listOfTeachers,
+    updateTeacher
 }

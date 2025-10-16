@@ -10,5 +10,7 @@ router.post("/addNewSchool",middleware.isLoggedIn,admincntrl.addNewSchool)
 router.get("/listOfSchools",middleware.isLoggedIn,admincntrl.listOfSchools)
 router.post("/addNewTeacher",middleware.isLoggedIn,admincntrl.addNewTeacher)
 router.get("/listOfTeachers",middleware.isLoggedIn,admincntrl.listOfTeachers)
+router.put("/updateTeacher/:id",middleware.isLoggedIn,admincntrl.updateTeacher)
+// router.put("/updateTeacher/:id",admincntrl.updateTeacher)
 
 module.exports=router
