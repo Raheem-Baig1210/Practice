@@ -2,7 +2,7 @@ const admin = require("../model/admin");
 const adminMdl = require("../model/admin")
 const schoolMdl = require("../model/school_admin")
 const teacherMdl = require("../model/teacher");
-const { param } = require("../routes/admin_routes");
+// const { param } = require("../routes/admin_routes");
 const {responseGenerator, hashpassword, comparepassword, generateTokens} = require("../utils/utils")
 
 
@@ -83,6 +83,26 @@ const addNewSchool = async(req,res) =>{
     }
 }
 
+
+const updateSchool = async(req,res)=>{
+    try {
+        const schoolId=req.params.id;
+        const updatedData=req.body
+
+        const school= await schoolMdl.findByIdAndUpdate(schoolId,updatedData,{new: true})
+        if(!school){
+            return res.status(404).json({message: "School not found ...!!!"})
+        }
+
+        res.status(200).json({message: "School updated successfuly...!!!"})
+    } catch (err) {
+        console.log(err)
+        let resp = responseGenerator(false, "Error while updating school...!!!");
+        return res.status(404).json(resp)
+    }
+}
+
+
 const listOfSchools = async(req,res)=>{
     try {
         const schools = await schoolMdl.find().select("-password").lean()
@@ -93,6 +113,18 @@ const listOfSchools = async(req,res)=>{
         return res.status(500).json(resp)
     }
 }
+
+
+const deleteSchool = async(req,res)=>{
+    try {
+            
+    } catch (error) {
+        console.log(error)
+        let resp=responseGenerator(false, "Error while deleting School...!!!!")
+        return res.status(404).json(resp)
+    }
+}
+
 
 const  addNewTeacher = async(req,res)=>{
     try {
@@ -151,6 +183,7 @@ module.exports={
     loginAdmin,
     listOfAdmins,
     addNewSchool,
+    updateSchool,
     listOfSchools,
     addNewTeacher,
     listOfTeachers,
