@@ -117,7 +117,15 @@ const listOfSchools = async(req,res)=>{
 
 const deleteSchool = async(req,res)=>{
     try {
-            
+        const {id}=req.params;
+        const school=await schoolMdl.findByIdAndUpdate(id)
+        if(!school){
+            return res.status(500).json({message:"School not found"})
+        }
+        school.isActive=!school.isActive;
+        await school.save()
+        let resp=responseGenerator(true,"School's status changed successfully")
+        return res.status(200).json(resp)
     } catch (error) {
         console.log(error)
         let resp=responseGenerator(false, "Error while deleting School...!!!!")
@@ -178,6 +186,26 @@ const updateTeacher = async(req,res)=>{
     }
 }
 
+
+const deleteTeacher = async(req,res)=>{
+    try {
+        const {id}=req.params;
+        const teacher=await teacherMdl.findByIdAndUpdate(id)
+        if(!teacher){
+            return res.status(500).json({message:"teacher not found"})
+        }
+        teacher.isActive=!teacher.isActive;
+        await teacher.save()
+        let resp=responseGenerator(true,"teacher's status changed successfully")
+        return res.status(200).json(resp)
+    } catch (error) {
+        console.log(error)
+        let resp=responseGenerator(false, "Error while deleting teacher...!!!!")
+        return res.status(404).json(resp)
+    }
+}
+
+
 module.exports={
     registerAdmin,
     loginAdmin,
@@ -187,5 +215,7 @@ module.exports={
     listOfSchools,
     addNewTeacher,
     listOfTeachers,
-    updateTeacher
+    updateTeacher,
+    deleteSchool,
+    deleteTeacher
 }
