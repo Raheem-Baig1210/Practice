@@ -13,5 +13,5 @@ router.get("/listOfSchools",middleware.isLoggedIn,admincntrl.listOfSchools)
 router.post("/addNewTeacher",middleware.isLoggedIn,admincntrl.addNewTeacher)
 router.get("/listOfTeachers",middleware.isLoggedIn,admincntrl.listOfTeachers)
 router.put("/updateTeacher/:id",middleware.isLoggedIn,admincntrl.updateTeacher)
-router.put("/deleteTeacher/:id",admincntrl.deleteTeacher)
+router.put("/deleteTeacher/:id",middleware.isLoggedIn,admincntrl.deleteTeacher)
 module.exports=router
