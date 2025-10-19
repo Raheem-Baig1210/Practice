@@ -6,12 +6,20 @@ const middleware = require("../middleware/isLoggedIn")
 router.post("/registerAdmin", admincntrl.registerAdmin)
 router.post("/loginAdmin", admincntrl.loginAdmin)
 router.get("/listOfAdmins",middleware.isLoggedIn,admincntrl.listOfAdmins)
+
 router.post("/addNewSchool",middleware.isLoggedIn,admincntrl.addNewSchool)
 router.put("/updateSchool/:id",middleware.isLoggedIn,admincntrl.updateSchool)
 router.put("/deleteSchool/:id",middleware.isLoggedIn,admincntrl.deleteSchool)
 router.get("/listOfSchools",middleware.isLoggedIn,admincntrl.listOfSchools)
+
 router.post("/addNewTeacher",middleware.isLoggedIn,admincntrl.addNewTeacher)
 router.get("/listOfTeachers",middleware.isLoggedIn,admincntrl.listOfTeachers)
 router.put("/updateTeacher/:id",middleware.isLoggedIn,admincntrl.updateTeacher)
 router.put("/deleteTeacher/:id",middleware.isLoggedIn,admincntrl.deleteTeacher)
+
+router.post("/addNewStudent",middleware.isLoggedIn,admincntrl.addNewStudent)
+router.get("/listOfStudents",middleware.isLoggedIn,admincntrl.listOfStudent)
+router.put("/updateStudent/:id",middleware.isLoggedIn,admincntrl.updateStudent)
+router.put("/deleteStudent/:id",admincntrl.deleteStudent)
+
 module.exports=router

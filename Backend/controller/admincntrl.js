@@ -2,8 +2,11 @@ const admin = require("../model/admin");
 const adminMdl = require("../model/admin")
 const schoolMdl = require("../model/school_admin")
 const teacherMdl = require("../model/teacher");
+const studentMdl = require("../model/students")
 // const { param } = require("../routes/admin_routes");
-const {responseGenerator, hashpassword, comparepassword, generateTokens} = require("../utils/utils")
+const {responseGenerator, hashpassword, comparepassword, generateTokens} = require("../utils/utils");
+const { default: mongoose } = require("mongoose");
+const teacher = require("../model/teacher");
 
 
 
@@ -157,6 +160,7 @@ const  addNewTeacher = async(req,res)=>{
 const listOfTeachers = async(req,res)=>{
     try {
         const teachers = await teacherMdl.find().select("-password").lean()
+        // console.log(teachers)
         let resp = responseGenerator(true, "Here is the list of teachers...!!!",teachers)
         // console.log(teachers.phno, teachers.email)
         return res.status(200).json(resp)
@@ -206,6 +210,88 @@ const deleteTeacher = async(req,res)=>{
 }
 
 
+const addNewStudent = async(req,res)=>{
+    try {
+        const data=req.body;
+        const student=new studentMdl(data)
+        
+        const currentYear=new Date().getFullYear()
+        const yearSuffix=currentYear.toString().slice(-2)
+        
+        const lastRollStudent = await studentMdl.findOne({rollNumber: {$regex:`^${yearSuffix}`}},{},{sort: {rollNumber: -1}})
+        
+        if(lastRollStudent && lastRollStudent.rollNumber){
+            const lastCount = parseInt(lastRollStudent.rollNumber.slice(2));
+            const nextCount = (lastCount+1).toString().padStart(3,"0")
+            student.rollNumber=`${yearSuffix}${nextCount}`
+        }else{
+            student.rollNumber=`${yearSuffix}001`
+        }
+        
+        
+        await student.save()
+        
+        let resp = responseGenerator(true,"Student added Successfully ...!!!");
+        return res.status(200).json(resp)
+    } catch (error) {
+        console.log(error);
+        let resp = responseGenerator(false, "Error while adding a new Student...!!!")
+        return res.status(404).json(resp)
+    }
+}
+
+
+const listOfStudent = async(req,res)=>{
+    try {
+        const students= await studentMdl.find().lean()
+        
+        const resp = responseGenerator(true,"Here is the List of students ...!!!",students)
+        
+        return res.status(200).json(resp);
+    } catch (error) {
+        console.log(error);
+        let resp = responseGenerator(false,"Error while fetching the list of students...!!!")
+        return res.status(404).json(resp)
+    }
+}
+
+const updateStudent = async(req,res)=>{
+    try {
+        const studentId = req.params.id
+        const updatedData = req.body;
+        
+        const updatedStudent = await studentMdl.findByIdAndUpdate(studentId,updatedData,{new:true})
+        if(!updatedStudent){
+            return res.status(400).json({message: "Student not found...!!!"})
+        }
+        res.status(200).json({message:"Student Updated successfully...!!!"})
+    } catch (err) {
+        console.log(err)
+        let resp = responseGenerator(false,"Error while updating the student information...!!!")
+        return res.status(404).json(resp)
+    }
+}
+
+
+const deleteStudent = async(req,res)=>{
+    try {
+        const {id}=req.params;
+        const student = await studentMdl.findByIdAndUpdate(id,{ isActive: req.body.isActive },{new:true})
+        if(!student){
+            return res.status(400).json({message:"Student Not found...!!!"})
+        }
+        // student.isActive=!student.isActive
+        await student.save()
+        let resp = responseGenerator(true, "Student status changed...!!!")
+        return res.status(200).json(resp)
+    } catch (err) {
+        console.log(err)
+        let resp = responseGenerator(false,"Error while making student Active/inactive...!!!")
+        return res.status(404).json(resp)
+    }
+}
+
+
 module.exports={
     registerAdmin,
     loginAdmin,
@@ -217,5 +303,9 @@ module.exports={
     listOfTeachers,
     updateTeacher,
     deleteSchool,
-    deleteTeacher
+    deleteTeacher,
+    addNewStudent,
+    listOfStudent,
+    updateStudent,
+    deleteStudent
 }
