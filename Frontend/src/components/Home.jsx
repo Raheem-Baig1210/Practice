@@ -72,7 +72,7 @@ const HomePage = () => {
                   </div>
                   <h4 className="text-xl font-semibold text-gray-900 mb-2">School</h4>
                   <p className="text-gray-600 text-sm mb-6 leading-relaxed">Institution management and oversight</p>
-                  <button className="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 transform group-hover:scale-105 shadow-lg hover:shadow-xl">
+                  <button onClick={()=> navigate("/login")} className="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 transform group-hover:scale-105 shadow-lg hover:shadow-xl">
                     Login as School
                   </button>
                 </div>
