@@ -291,6 +291,15 @@ const deleteStudent = async(req,res)=>{
     }
 }
 
+const searchTeachersBySchool = async(req,res)=>{
+    try {
+        
+    } catch (err) {
+        console.log(err)
+        return res.status(404).json({message: "Error while fetching the teachers by school ID...!!!"})
+    }
+}
+
 
 module.exports={
     registerAdmin,

@@ -534,6 +534,11 @@ const TeacherSection = ({ section }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All Teachers');
     const [showDropdown, setShowDropdown] = useState(false);
+
+    // NEW STATE FOR SCHOOL FILTER
+    const [filterSchoolId, setFilterSchoolId] = useState('All Schools');
+    const [showSchoolDropdown, setShowSchoolDropdown] = useState(false); 
+
     const [viewingTeacher, setViewingTeacher] = useState(null);
     const [showViewModal, setShowViewModal] = useState(false);
 
@@ -555,6 +560,20 @@ const TeacherSection = ({ section }) => {
     const showNotification = (message, type = 'success') => {
         setNotification({ message, type });
     };
+
+    // Helper function to get school name from ID
+    const getSchoolName = (schoolId) => {
+        if (!schoolId) return 'N/A';
+        // The teacher object might contain the full school object or just the ID.
+        // We handle objects (which might come from the list API) or simple ID strings.
+        const idToSearch = typeof schoolId === 'object' && schoolId !== null 
+            ? schoolId._id?.toString() || schoolId.id 
+            : schoolId;
+
+        const school = schools.find(s => s.id === idToSearch);
+        return school ? school.displayName : 'Unknown School';
+    };
+
 
     // RE-USABLE FUNCTION TO FETCH TEACHERS
     const fetchTeachers = async () => {
@@ -583,7 +602,9 @@ const TeacherSection = ({ section }) => {
             // Derive string status ('active'/'inactive') from boolean isActive for UI consumption
             status: t.isActive === false ? 'inactive' : 'active',
             // Keep isActive boolean for backend payload consistency
-            isActive: t.isActive !== undefined ? t.isActive : true // Default to true if missing
+            isActive: t.isActive !== undefined ? t.isActive : true, // Default to true if missing
+            // Standardize schoolId to be a string ID for consistency
+            schoolId: t.schoolId?._id?.toString() || t.schoolId?.id || t.schoolId?.toString() // Handles ID or embedded object
         }));
         // --- END: Status/isActive Logic ---
 
@@ -610,48 +631,51 @@ const TeacherSection = ({ section }) => {
         }
     }, [section, showAddForm, showEditModal]);
 
-    // Fetch schools when add/edit form is shown
+    // Fetch schools when add/edit form is shown OR to populate the filter dropdown
     useEffect(() => {
         const fetchSchools = async () => {
-            if (section === 'add-teacher' || showAddForm || showEditModal) {
-                try {
-                    const token = localStorage.getItem('token');
-                    if (!token) {
-                        throw new Error('Unauthorized User is trying to access...!!!');
-                    }
-
-                    const response = await fetch('http://localhost:3000/admin/listOfSchools', {
-                        method: "GET",
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch schools');
-                    }
-
-                    const data = await response.json();
-                    const schoolsData = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
-
-                    const standardizedSchools = schoolsData.map(school => ({
-                        ...school,
-                        id: school.id || school._id?.toString() || school._id,
-                        displayName: school.name || school.schoolName || `School ID: ${school.id || school._id}`
-                    }));
-
-                    setSchools(standardizedSchools);
-
-                } catch (err) {
-                    console.error('Failed to fetch schools:', err);
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    // This is non-critical for the page load but needed for forms/filters
+                    console.warn('No token found, cannot fetch schools.');
                     setSchools([]);
+                    return;
                 }
+
+                const response = await fetch('http://localhost:3000/admin/listOfSchools', {
+                    method: "GET",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch schools');
+                }
+
+                const data = await response.json();
+                const schoolsData = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+
+                const standardizedSchools = schoolsData.map(school => ({
+                    ...school,
+                    id: school.id || school._id?.toString() || school._id,
+                    displayName: school.name || school.schoolName || `School ID: ${school.id || school._id}`
+                }));
+
+                setSchools(standardizedSchools);
+
+            } catch (err) {
+                console.error('Failed to fetch schools:', err);
+                setSchools([]);
             }
         };
 
+        // Fetch schools regardless of form state, as they are now needed for the filter
         fetchSchools();
-    }, [section, showAddForm, showEditModal]);
+    }, []); // Empty dependency array means this runs once on mount
+
 
     // Form state for adding new teacher
     const [form, setForm] = useState({
@@ -821,7 +845,7 @@ const TeacherSection = ({ section }) => {
     };
 
 
-    // Filter teachers based on search term and status (functionality preserved)
+    // Filter teachers based on search term, status, and SCHOOL ID
     let filteredTeachers = teachers.filter(teacher =>
         teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -835,12 +859,21 @@ const TeacherSection = ({ section }) => {
         filteredTeachers = filteredTeachers.filter(teacher => teacher.status === 'inactive');
     }
 
+    // NEW SCHOOL FILTER LOGIC
+    if (filterSchoolId !== 'All Schools') {
+        filteredTeachers = filteredTeachers.filter(teacher => {
+            // Match the standardized schoolId string
+            return teacher.schoolId === filterSchoolId;
+        });
+    }
+
+
     // Action handlers (functionality preserved)
     const handleView = (teacher) => {
         const viewableTeacher = {
             ...teacher,
             id: teacher.id || teacher._id?.toString(),
-            schoolId: teacher.schoolId?.toString() || (teacher.school && typeof teacher.school === 'object' ? teacher.school._id?.toString() : '')
+            schoolId: teacher.schoolId?.toString() // Ensure schoolId is a string ID
         };
         setViewingTeacher(viewableTeacher);
         setShowViewModal(true);
@@ -850,7 +883,8 @@ const TeacherSection = ({ section }) => {
         const teacherForEdit = {
             ...teacher,
             id: teacher.id || teacher._id?.toString(),
-            schoolId: teacher.schoolId?.toString() || (teacher.school && typeof teacher.school === 'object' ? teacher.school._id?.toString() : teacher.schoolId || ''),
+            // Ensure schoolId is a string ID for the select box value
+            schoolId: teacher.schoolId?.toString() || '', 
             phno: teacher.phno?.toString() || '',
             experience: teacher.experience?.toString() || '',
             password: '',
@@ -932,6 +966,35 @@ const TeacherSection = ({ section }) => {
     const totalTeachers = teachers.length;
     const activeTeachers = teachers.filter(teacher => teacher.status !== 'inactive').length;
     const inactiveTeachers = totalTeachers - activeTeachers;
+
+
+    // FIX FOR ISSUE 3: Modals and Notifications are rendered unconditionally at the end of every return path.
+    const modalsAndNotifications = (
+        <>
+            <ViewModal 
+                showViewModal={showViewModal}
+                viewingTeacher={viewingTeacher}
+                setShowViewModal={setShowViewModal}
+                handleEdit={handleEdit}
+            />
+            <EditModal 
+                showEditModal={showEditModal}
+                editingTeacher={editingTeacher}
+                schools={schools}
+                handleEditFormChange={handleEditFormChange}
+                handleEditSubmit={handleEditSubmit}
+                setShowEditModal={setShowEditModal}
+                editFormStatus={editFormStatus}
+            />
+            <StatusConfirmationModal
+                teacher={teacherToConfirmStatus}
+                onConfirm={handleStatusToggleConfirm}
+                onCancel={handleStatusToggleCancel}
+                status={statusChangeRequest}
+            />
+            <NotificationToast notification={notification} setNotification={setNotification} />
+        </>
+    );
 
     // Render Add Teacher Form
     if (section === 'add-teacher' || showAddForm) {
@@ -1118,17 +1181,27 @@ const TeacherSection = ({ section }) => {
                         {formStatus.error && <p className="text-red-600 text-sm mt-2 font-medium">Error: {formStatus.error}</p>}
                     </form>
                 </div>
-                <NotificationToast notification={notification} setNotification={setNotification} />
+                {modalsAndNotifications} {/* Render modals here (Fix for Issue 3) */}
             </div>
         );
     }
 
     if (loading) {
-        return <div className="p-6 text-center text-teal-600 bg-gray-100 min-h-screen">Loading teachers...</div>;
+        return (
+            <>
+                <div className="p-6 text-center text-teal-600 bg-gray-100 min-h-screen">Loading teachers and schools...</div>
+                {modalsAndNotifications} {/* Render modals here (Fix for Issue 3) */}
+            </>
+        );
     }
 
     if (error) {
-        return <div className="p-6 text-center text-red-600 bg-gray-100 min-h-screen">Error: {error}</div>;
+        return (
+            <>
+                <div className="p-6 text-center text-red-600 bg-gray-100 min-h-screen">Error: {error}</div>
+                {modalsAndNotifications} {/* Render modals here (Fix for Issue 3) */}
+            </>
+        );
     }
 
     // Main Teacher List View
@@ -1164,7 +1237,7 @@ const TeacherSection = ({ section }) => {
                     </div>
                 </div>
             </div>
-            {/* Search and Filter Section - Bright Theme */}
+            {/* Search and Filter Section - Bright Theme (MODIFIED) */}
             <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
                 <div className="flex items-center justify-between">
                     <div className="relative flex-1 max-w-md">
@@ -1177,37 +1250,89 @@ const TeacherSection = ({ section }) => {
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-800"
                         />
                     </div>
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 bg-white transition-colors"
-                        >
-                            <span className="text-gray-700">{filterStatus}</span>
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                        </button>
-                        {showDropdown && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
-                                <div className="py-1">
-                                    {['All Teachers', 'Active Teachers', 'Inactive Teachers'].map((option) => (
-                                        <button
-                                            key={option}
-                                            onClick={() => {
-                                                setFilterStatus(option);
-                                                setShowDropdown(false);
-                                            }}
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            {option}
-                                        </button>
-                                    ))}
+                    
+                    {/* START: Filter Dropdowns Container (New layout for two filters) */}
+                    <div className="flex space-x-4"> 
+                        {/* 1. Status Filter (Existing) */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 bg-white transition-colors"
+                            >
+                                <span className="text-gray-700">{filterStatus}</span>
+                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                            </button>
+                            {showDropdown && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
+                                    <div className="py-1">
+                                        {['All Teachers', 'Active Teachers', 'Inactive Teachers'].map((option) => (
+                                            <button
+                                                key={option}
+                                                onClick={() => {
+                                                    setFilterStatus(option);
+                                                    setShowDropdown(false);
+                                                }}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+
+                        {/* 2. School Filter (NEW DROPDOWN) */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowSchoolDropdown(!showSchoolDropdown)}
+                                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 bg-white transition-colors"
+                            >
+                                <span className="text-gray-700 font-medium">
+                                    {filterSchoolId === 'All Schools' 
+                                        ? 'All Schools' 
+                                        : schools.find(s => s.id === filterSchoolId)?.displayName || 'Select School'
+                                    }
+                                </span>
+                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                            </button>
+                            {showSchoolDropdown && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
+                                    <div className="py-1 max-h-60 overflow-y-auto">
+                                        {/* Option to view all schools */}
+                                        <button
+                                            onClick={() => {
+                                                setFilterSchoolId('All Schools');
+                                                setShowSchoolDropdown(false);
+                                            }}
+                                            className="block w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                                        >
+                                            All Schools
+                                        </button>
+                                        {/* List of schools from state */}
+                                        {schools.map((school) => (
+                                            <button
+                                                key={school.id}
+                                                onClick={() => {
+                                                    setFilterSchoolId(school.id);
+                                                    setShowSchoolDropdown(false);
+                                                }}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 truncate"
+                                                title={school.displayName}
+                                            >
+                                                {school.displayName}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
+                    {/* END: Filter Dropdowns Container */}
                 </div>
             </div>
 
-            {/* Teachers Table - Bright Theme */}
+            {/* Teachers Table - Bright Theme (MODIFIED: ADDED SCHOOL COLUMN) */}
             <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -1217,6 +1342,7 @@ const TeacherSection = ({ section }) => {
                                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Phone</th>
                                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Email</th>
                                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Subject</th>
+                                <th className="text-left px-6 py-4 font-semibold text-gray-700">School</th> {/* NEW HEADER */}
                                 {/* Status column uses the derived 'status' string */}
                                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Status</th>
                                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Actions</th>
@@ -1225,17 +1351,26 @@ const TeacherSection = ({ section }) => {
                         <tbody className="divide-y divide-gray-200">
                             {filteredTeachers.length > 0 ? (
                                 filteredTeachers.map((teacher) => (
-                                    <tr key={teacher.id || teacher._id} className="hover:bg-gray-50 transition-colors">
+                                    <tr 
+                                        key={teacher.id} // Corrected to use standardized 'id' for stability.
+                                        className="hover:bg-gray-50 transition-colors"
+                                    >
                                         <td className="px-6 py-4">
                                             <div>
                                                 <div className="font-semibold text-gray-900">{teacher.name}</div>
                                                 <div className="text-sm text-gray-500">{teacher.qualification || 'No qualification listed'}</div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-700">{teacher.phno || 'Not provided'}</td>
+                                        <td className="px-6 py-4 text-gray-700">{teacher.phno || 'N/A'}</td>
                                         <td className="px-6 py-4 text-gray-700">{teacher.email}</td>
                                         <td className="px-6 py-4 text-gray-700">
                                             {teacher.subject || 'Not specified'}
+                                        </td>
+                                        {/* NEW SCHOOL COLUMN CELL */}
+                                        <td className="px-6 py-4 text-gray-700">
+                                            <div className="font-medium text-gray-900 truncate max-w-[150px]" title={getSchoolName(teacher.schoolId)}>
+                                                {getSchoolName(teacher.schoolId)}
+                                            </div>
                                         </td>
                                         {/* Status Badge Column */}
                                         <td className="px-6 py-4">
@@ -1282,7 +1417,7 @@ const TeacherSection = ({ section }) => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                                         {searchTerm ? 'No teachers found matching your search.' : 'No teachers found.'}
                                     </td>
                                 </tr>
@@ -1292,29 +1427,8 @@ const TeacherSection = ({ section }) => {
                 </div>
             </div>
 
-            {/* Modals and Notifications */}
-            <ViewModal 
-                showViewModal={showViewModal}
-                viewingTeacher={viewingTeacher}
-                setShowViewModal={setShowViewModal}
-                handleEdit={handleEdit}
-            />
-            <EditModal 
-                showEditModal={showEditModal}
-                editingTeacher={editingTeacher}
-                schools={schools}
-                handleEditFormChange={handleEditFormChange}
-                handleEditSubmit={handleEditSubmit}
-                setShowEditModal={setShowEditModal}
-                editFormStatus={editFormStatus}
-            />
-            <StatusConfirmationModal
-                teacher={teacherToConfirmStatus}
-                onConfirm={handleStatusToggleConfirm}
-                onCancel={handleStatusToggleCancel}
-                status={statusChangeRequest}
-            />
-            <NotificationToast notification={notification} setNotification={setNotification} />
+            {/* Modals and Notifications (Fix for Issue 3) */}
+            {modalsAndNotifications}
         </div>
     );
 };
