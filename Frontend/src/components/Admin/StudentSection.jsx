@@ -530,9 +530,13 @@ const StudentSection = ({ section }) => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All Students');
-    const [showDropdown, setShowDropdown] = useState(false);
+    // MODIFIED: Replaced boolean with string/null to manage multiple dropdowns
+    const [showDropdown, setShowDropdown] = useState(null); 
     const [viewingStudent, setViewingStudent] = useState(null);
     const [showViewModal, setShowViewModal] = useState(false);
+    
+    // ADDED: State for School Filter
+    const [filterSchoolId, setFilterSchoolId] = useState('All Schools');
 
     // State for Edit
     const [editingStudent, setEditingStudent] = useState(null);
@@ -774,6 +778,15 @@ const StudentSection = ({ section }) => {
         filteredStudents = filteredStudents.filter(student => student.status !== 'inactive');
     } else if (filterStatus === 'Inactive Students') {
         filteredStudents = filteredStudents.filter(student => student.status === 'inactive');
+    }
+    
+    // ADDED: School Filter Logic
+    if (filterSchoolId !== 'All Schools') {
+        filteredStudents = filteredStudents.filter(student => {
+            // Check student's schoolId against the selected filter ID
+            const studentSchoolId = student.schoolId || student.school?._id?.toString() || student.school?.id;
+            return studentSchoolId === filterSchoolId;
+        });
     }
 
     // Helper to find school name
@@ -1086,32 +1099,78 @@ const StudentSection = ({ section }) => {
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-gray-800"
                         />
                     </div>
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 bg-white transition-colors"
-                        >
-                            <span className="text-gray-700">{filterStatus}</span>
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                        </button>
-                        {showDropdown && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
-                                <div className="py-1">
-                                    {['All Students', 'Active Students', 'Inactive Students'].map((option) => (
-                                        <button
-                                            key={option}
-                                            onClick={() => {
-                                                setFilterStatus(option);
-                                                setShowDropdown(false);
-                                            }}
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            {option}
-                                        </button>
-                                    ))}
+                    {/* MODIFIED: Wrapped dropdowns in a flex container for alignment */}
+                    <div className="flex items-center space-x-4"> 
+                        {/* Status Filter Dropdown (Modified to use showDropdown state as a string) */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowDropdown(showDropdown === 'status' ? null : 'status')}
+                                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 bg-white transition-colors"
+                            >
+                                <span className="text-gray-700">{filterStatus}</span>
+                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                            </button>
+                            {showDropdown === 'status' && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
+                                    <div className="py-1">
+                                        {['All Students', 'Active Students', 'Inactive Students'].map((option) => (
+                                            <button
+                                                key={option}
+                                                onClick={() => {
+                                                    setFilterStatus(option);
+                                                    setShowDropdown(null);
+                                                }}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                        
+                        {/* ADDED: School Filter Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowDropdown(showDropdown === 'school' ? null : 'school')}
+                                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 bg-white transition-colors"
+                            >
+                                <Building className="w-4 h-4 text-gray-500" />
+                                <span className="text-gray-700">
+                                    {filterSchoolId === 'All Schools' ? 'All Schools' : schools.find(s => s.id === filterSchoolId)?.displayName || 'Unknown School'}
+                                </span>
+                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                            </button>
+                            {showDropdown === 'school' && (
+                                <div className="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
+                                    <div className="py-1 max-h-60 overflow-y-auto">
+                                        <button
+                                            onClick={() => {
+                                                setFilterSchoolId('All Schools');
+                                                setShowDropdown(null);
+                                            }}
+                                            className="block w-full text-left px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100"
+                                        >
+                                            All Schools
+                                        </button>
+                                        <hr className="my-1 border-gray-100" />
+                                        {schools.map((school) => (
+                                            <button
+                                                key={school.id}
+                                                onClick={() => {
+                                                    setFilterSchoolId(school.id);
+                                                    setShowDropdown(null);
+                                                }}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                {school.displayName}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
