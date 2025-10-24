@@ -1,4 +1,4 @@
-const admin = require("../model/admin");
+// const admin = require("../model/admin");
 const adminMdl = require("../model/admin")
 const schoolMdl = require("../model/school_admin")
 const teacherMdl = require("../model/teacher");
@@ -6,7 +6,7 @@ const studentMdl = require("../model/students")
 // const { param } = require("../routes/admin_routes");
 const {responseGenerator, hashpassword, comparepassword, generateTokens} = require("../utils/utils");
 const { default: mongoose } = require("mongoose");
-const teacher = require("../model/teacher");
+// const teacher = require("../model/teacher");
 
 
 
@@ -291,14 +291,14 @@ const deleteStudent = async(req,res)=>{
     }
 }
 
-const searchTeachersBySchool = async(req,res)=>{
-    try {
+// const searchTeachersBySchool = async(req,res)=>{
+//     try {
         
-    } catch (err) {
-        console.log(err)
-        return res.status(404).json({message: "Error while fetching the teachers by school ID...!!!"})
-    }
-}
+//     } catch (err) {
+//         console.log(err)
+//         return res.status(404).json({message: "Error while fetching the teachers by school ID...!!!"})
+//     }
+// }
 
 
 module.exports={

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+// import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SignInCard from "./components/sign-in-card-2";
 import HomePage from "./components/Home";
@@ -8,7 +8,7 @@ import Private from "./components/private";
 import Login from "./pages/Login";
 
 // School Admin Components
-import SchoolDashboard from "./components/School/SchoolDashboard";
+import SchoolDashboard from "./components/School/school-dashboard";
 import Overview from "./components/School/Overview";
 import Students from "./components/School/Students";
 import Teachers from "./components/School/Teachers";
@@ -17,15 +17,16 @@ import Attendance from "./components/School/Attendance";
 import Exams from "./components/School/Exams";
 import Fees from "./components/School/Fees";
 import Settings from "./components/School/Settings";
+// import Login from "./pages/Login";
 
 function AppContent() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={user ? <Navigate to="/school/overview" replace /> : <Login />} />
+      <Route path="/login" element={<Login/>} />
       <Route path="/signin" element={<SignInCard />} />
       <Route path="/signup" element={<div>Signup Page</div>} />
 
@@ -38,9 +39,9 @@ function AppContent() {
 
       {/* School Admin Dashboard */}
       <Route path="/school" element={
-        <ProtectedRoute requiredRole="school">
+        <Private>
           <SchoolDashboard />
-        </ProtectedRoute>
+        </Private>
       }>
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<Overview />} />
@@ -62,9 +63,9 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+    
         <AppContent />
-      </AuthProvider>
+      
     </BrowserRouter>
   );
 }

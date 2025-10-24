@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext'; // Removed as login logic is now handled here
 import { Lock, Mail, School } from 'lucide-react';
 
 const Login = () => {
@@ -8,7 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  // const { login } = useAuth(); // Removed as login logic is now handled here
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,11 +16,44 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    const API_URL = 'http://localhost:3000/school/loginSchool';
+
     try {
-      await login(email, password);
-      navigate('/school/overview');
+      // 1. Send POST request to the login API
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        // 2. Store tokens in localStorage upon success
+        if (result.data.tokens) {
+          localStorage.setItem('authToken', result.data.tokens);
+          // Optional: Store the school ID as well for easy access
+          // if (result.data.school && result.data.school.id) {
+          //   localStorage.setItem('schoolId', result.data.school.id);
+          // }
+        } else {
+          // If the API call was 'ok' but no tokens were returned (unexpected), treat as an error
+          throw new Error('Login successful, but tokens are missing.');
+        }
+
+        // Navigate to school dashboard (existing functionality)
+        // console.log(result)
+        navigate('/school');
+        // console.log(result)  
+
+      } else {
+        // Handle API errors (e.g., 401 Unauthorized, 404 Not Found)
+        const errorMessage = result.message || 'Failed to log in. Please check your credentials.';
+        throw new Error(errorMessage);
+      }
     } catch (err) {
-      setError('Failed to log in. Please check your credentials.');
+      setError(err.message || 'An unexpected error occurred during login.');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -123,24 +156,7 @@ const Login = () => {
           </div>
         </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 text-gray-500 bg-white">Dummy Credentials</span>
-            </div>
-          </div>
-
-          <div className="mt-6 bg-gray-50 p-4 rounded-md">
-            <p className="text-sm text-gray-600">Use these credentials to log in:</p>
-            <div className="mt-2">
-              <p className="text-sm font-medium text-gray-900">Email: <span className="font-normal">school@example.com</span></p>
-              <p className="text-sm font-medium text-gray-900">Password: <span className="font-normal">school123</span></p>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

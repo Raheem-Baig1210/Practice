@@ -1,13 +1,18 @@
 // import { Children } from "react";
 import { Navigate } from "react-router-dom";
+import SchoolDashboard from "./School/school-dashboard";
+import AdminDashboard from "./Admin/admin-dashboard";
 
-const Private=({children})=>{
+const Private=()=>{
     const token =localStorage.getItem("token");
-    if (!token){
-        return <Navigate to="/signin"/>
+    const authToken =localStorage.getItem("authToken");
+    if (token ){
+        return <AdminDashboard/>
+        
+    } else if( authToken){
+        return <SchoolDashboard/>
     }
-
-    return children;
+    return <Navigate to="/signin"/>;
 }
 
 export default Private
