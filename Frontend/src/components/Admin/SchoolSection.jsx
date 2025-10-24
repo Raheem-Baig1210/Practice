@@ -160,6 +160,7 @@ const EditModal = React.memo(({ showEditModal, editingSchool, editForm, handleUp
                                 value={editForm.estyear}
                                 onChange={handleEditFormChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required // Assuming estyear is required for existing schools too
                             />
                         </div>
                     </div>
@@ -172,6 +173,7 @@ const EditModal = React.memo(({ showEditModal, editingSchool, editForm, handleUp
                             onChange={handleEditFormChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows={2}
+                            required // Assuming location is required for existing schools too
                         />
                     </div>
 
@@ -406,12 +408,14 @@ const SchoolSection = ({ section }) => {
         }
     }, [section, showAddForm, showEditModal, fetchSchools]);
 
+    // ⭐ MODIFIED: Added 'password' to the initial state
     const [form, setForm] = useState({
         name: '',
         estyear: '',
         location: '',
         phno: '',
-        email: ''
+        email: '',
+        password: '' // New password field
     });
     const [formStatus, setFormStatus] = useState({
         loading: false,
@@ -431,12 +435,15 @@ const SchoolSection = ({ section }) => {
         e.preventDefault();
         setFormStatus({ loading: true, success: false, error: null });
 
-        const payload = { ...form, password: 'school123' };
+        // ⭐ MODIFIED: Removed the hardcoded password and use the state value
+        const payload = { ...form }; 
+        // The isActive field will default to true on the backend as per your schema, so we don't include it here.
 
         try {
             await apiCall('http://localhost:3000/admin/addNewSchool', 'POST', payload);
             setFormStatus({ loading: false, success: true, error: null });
-            setForm({ name: '', estyear: '', location: '', phno: '', email: '' });
+            // Reset form and close
+            setForm({ name: '', estyear: '', location: '', phno: '', email: '', password: '' });
             setShowAddForm(false);
             fetchSchools(); // Refresh the schools list
         } catch (err) {
@@ -577,6 +584,7 @@ const SchoolSection = ({ section }) => {
                                     onChange={handleFormChange}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Year established"
+                                    required // ⭐ MODIFIED: Added required
                                 />
                             </div>
                         </div>
@@ -590,6 +598,7 @@ const SchoolSection = ({ section }) => {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 rows={3}
                                 placeholder="Enter full address"
+                                required // ⭐ MODIFIED: Added required
                             />
                         </div>
 
@@ -615,6 +624,19 @@ const SchoolSection = ({ section }) => {
                                     onChange={handleFormChange}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Admin email"
+                                    required
+                                />
+                            </div>
+                            {/* ⭐ NEW FIELD: Password */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <input 
+                                    type="password" 
+                                    name="password"
+                                    value={form.password}
+                                    onChange={handleFormChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Initial password for school admin"
                                     required
                                 />
                             </div>

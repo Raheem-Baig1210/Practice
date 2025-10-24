@@ -29,14 +29,15 @@ const Login = () => {
       });
 
       const result = await response.json();
+      // console.log(result)
       if (response.ok) {
         // 2. Store tokens in localStorage upon success
         if (result.data.tokens) {
           localStorage.setItem('authToken', result.data.tokens);
           // Optional: Store the school ID as well for easy access
-          // if (result.data.school && result.data.school.id) {
-          //   localStorage.setItem('schoolId', result.data.school.id);
-          // }
+          
+            localStorage.setItem('schoolId', result.data.id);
+          
         } else {
           // If the API call was 'ok' but no tokens were returned (unexpected), treat as an error
           throw new Error('Login successful, but tokens are missing.');

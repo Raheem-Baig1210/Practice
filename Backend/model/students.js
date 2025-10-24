@@ -10,7 +10,7 @@ const studentSchema = new schema(
         class:{type: Number,required: true},
         section: {type: String},
         gardianPhno: {type: Number, required: true},
-        schoolId: {type: mongoose.Schema.Types.ObjectId, ref: "school_admin", required: true},
+        schoolId: {type: mongoose.Schema.Types.ObjectId, ref: "school", required: true},
         isActive: {type: Boolean, required: true, default: true},
     },{timestamps: true}
 )
