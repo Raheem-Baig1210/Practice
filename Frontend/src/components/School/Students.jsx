@@ -396,8 +396,10 @@ const Students = () => {
         return;
     }
     
-    const apiUrl = `${API_BASE_URL}/school/inActiveStudent/${selectedStudent._id}`;
-
+    const apiUrl = `${API_BASE_URL}/school/isActiveStudent/${selectedStudent._id}`;
+    // selectedStudent._id.isActive=!selectedStudent._id.isActive
+    // console.log(`${selectedStudent._id.gender}`)
+    const newIsActiveStatus = !selectedStudent.isActive;
     try {
         const response = await fetch(apiUrl, {
             method: 'PUT',
@@ -405,6 +407,7 @@ const Students = () => {
                 'Authorization': `Bearer ${authToken}`, 
                 'Content-Type': 'application/json'
             },
+            body: JSON.stringify({ isActive: newIsActiveStatus }),
         });
 
         if (!response.ok) {
